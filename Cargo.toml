@@ -32,6 +32,9 @@ iovec    = "0.1.0"
 magenta = "0.2.0"
 magenta-sys = "0.2.0"
 
+[target.'cfg(target_os = "redox")'.dependencies]
+redox_syscall = "0.1"
+
 [target.'cfg(unix)'.dependencies]
 libc   = "0.2.19"
 

@@ -89,6 +89,9 @@ extern crate magenta;
 #[cfg(target_os = "fuchsia")]
 extern crate magenta_sys;
 
+#[cfg(target_os = "redox")]
+extern crate syscall;
+
 #[cfg(unix)]
 extern crate libc;
 
