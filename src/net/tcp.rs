@@ -107,7 +107,7 @@ impl TcpStream {
         }
         TcpStream::connect_stream(sock.to_tcp_stream()?, addr)
     }
-    
+
     /// Create a new TCP stream and issue a non-blocking connect to the
     /// specified address.
     ///
@@ -547,6 +547,17 @@ impl TcpListener {
 
         // listen
         let listener = sock.listen(1024)?;
+        Ok(TcpListener {
+            sys: sys::TcpListener::new(listener, addr)?,
+            selector_id: SelectorId::new(),
+        })
+    }
+
+    /// Convenience method to bind a new TCP listener to the specified address
+    /// to receive new connections.
+    #[cfg(any(target_os = "redox"))]
+    pub fn bind(addr: &SocketAddr) -> io::Result<TcpListener> {
+        let listener = net::TcpListener::bind(addr)?;
         Ok(TcpListener {
             sys: sys::TcpListener::new(listener, addr)?,
             selector_id: SelectorId::new(),
