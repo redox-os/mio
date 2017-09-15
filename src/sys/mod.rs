@@ -1,21 +1,3 @@
-#[cfg(target_os = "redox")]
-pub use self::redox::{
-    Awakener,
-    EventedFd,
-    Events,
-    Io,
-    Selector,
-    TcpStream,
-    TcpListener,
-    UdpSocket,
-    pipe,
-    set_nonblock,
-};
-
-
-#[cfg(target_os = "redox")]
-mod redox;
-
 #[cfg(all(unix, not(target_os = "fuchsia")))]
 pub use self::unix::{
     Awakener,
@@ -66,3 +48,21 @@ pub use self::fuchsia::{
 
 #[cfg(target_os = "fuchsia")]
 pub mod fuchsia;
+
+#[cfg(target_os = "redox")]
+pub use self::redox::{
+    Awakener,
+    EventedFd,
+    Events,
+    Io,
+    Selector,
+    TcpStream,
+    TcpListener,
+    UdpSocket,
+    pipe,
+    set_nonblock,
+};
+
+
+#[cfg(target_os = "redox")]
+mod redox;
