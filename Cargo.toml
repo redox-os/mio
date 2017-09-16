@@ -30,8 +30,6 @@ lazycell = "0.5.0"
 log      = "0.3.1"
 slab     = "0.3.0"
 net2     = { git = "https://github.com/redox-os/net2-rs.git" }
-
-[target.'cfg(not(target_os = "redox"))'.dependencies]
 iovec    = { git = "https://github.com/redox-os/iovec.git" }
 
 [target.'cfg(target_os = "fuchsia")'.dependencies]
