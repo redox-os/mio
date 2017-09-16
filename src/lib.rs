@@ -82,7 +82,6 @@
 
 extern crate lazycell;
 extern crate net2;
-#[cfg(not(target_os = "redox"))]
 extern crate iovec;
 
 #[cfg(target_os = "fuchsia")]
@@ -134,7 +133,6 @@ pub mod deprecated;
 #[deprecated(since = "0.6.5", note = "use iovec crate directly")]
 #[cfg(feature = "with-deprecated")]
 #[doc(hidden)]
-#[cfg(not(target_os = "redox"))]
 pub use iovec::IoVec;
 
 #[deprecated(since = "0.6.6", note = "use net module instead")]
