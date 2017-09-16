@@ -81,7 +81,6 @@
 #![deny(warnings, missing_docs, missing_debug_implementations)]
 
 extern crate lazycell;
-#[cfg(not(target_os = "redox"))]
 extern crate net2;
 #[cfg(not(target_os = "redox"))]
 extern crate iovec;
