@@ -36,12 +36,17 @@ fn set_readiness_before_register() {
         let b2 = b1.clone();
 
         let th = thread::spawn(move || {
-            b2.wait();
+            // set readiness before register
             set.set_readiness(Ready::readable()).unwrap();
+
+            // run into barrier so both can pass
+            b2.wait();
         });
 
+        // wait for readiness
         b1.wait();
 
+        // now register
         poll.register(&r, Token(123), Ready::readable(), PollOpt::edge()).unwrap();
 
         loop {
@@ -80,7 +85,7 @@ mod stress {
 
         for _ in 0..NUM_ATTEMPTS {
             let poll = Poll::new().unwrap();
-            let mut events = Events::with_capacity(128);
+            let mut events = Events::with_capacity(NUM_REGISTRATIONS);
 
             let registrations: Vec<_> = (0..NUM_REGISTRATIONS).map(|i| {
                 let (r, s) = Registration::new2();
@@ -136,11 +141,17 @@ mod stress {
                 }
             }
 
-            // One final poll
-            poll.poll(&mut events, Some(Duration::from_millis(0))).unwrap();
-
-            for event in &events {
-                ready[event.token().0] = event.readiness();
+            // Finall polls, repeat until readiness-queue empty
+            loop {
+                // Might not read all events from custom-event-queue at once, implementation dependend
+                poll.poll(&mut events, Some(Duration::from_millis(0))).unwrap();
+                if events.is_empty() {
+                    // no more events in readiness queue pending
+                    break;
+                }
+                for event in &events {
+                    ready[event.token().0] = event.readiness();
+                }
             }
 
             // Everything should be flagged as readable
@@ -254,19 +265,12 @@ mod stress {
             }));
         }
 
-        let per_thread: Vec<_> = threads.into_iter()
+        let _: Vec<_> = threads.into_iter()
             .map(|th| th.join().unwrap())
             .collect();
 
         for entry in entries.iter() {
             assert_eq!(PER_ENTRY, entry.num.load(Relaxed));
-        }
-
-        for th in per_thread {
-            // Kind of annoying that we can't really test anything better than this,
-            // but CI tends to be very non deterministic when it comes to multi
-            // threading.
-            assert!(th > 0, "actual={:?}", th);
         }
     }
 

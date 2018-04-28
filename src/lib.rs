@@ -10,6 +10,21 @@
 //! * Design to allow for stack allocated buffers when possible (avoid double buffering).
 //! * Provide utilities such as a timers, a notification channel, buffer abstractions, and a slab.
 //!
+//! # Platforms
+//!
+//! Currently supported platforms:
+//!
+//! * Linux
+//! * OS X
+//! * Windows
+//! * FreeBSD
+//! * NetBSD
+//! * Android
+//! * iOS
+//!
+//! mio can handle interfacing with each of the event notification systems of the aforementioned platforms. The details of
+//! their implementation are further discussed in [`Poll`].
+//!
 //! # Usage
 //!
 //! Using mio starts by creating a [`Poll`], which reads events from the OS and
@@ -75,7 +90,7 @@
 //!
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/mio/0.6.1")]
+#![doc(html_root_url = "https://docs.rs/mio/0.6.14")]
 #![crate_name = "mio"]
 
 #![deny(warnings, missing_docs, missing_debug_implementations)]
@@ -83,11 +98,12 @@
 extern crate lazycell;
 extern crate net2;
 extern crate iovec;
+extern crate slab;
 
 #[cfg(target_os = "fuchsia")]
-extern crate magenta;
+extern crate fuchsia_zircon as zircon;
 #[cfg(target_os = "fuchsia")]
-extern crate magenta_sys;
+extern crate fuchsia_zircon_sys as zircon_sys;
 
 #[cfg(target_os = "redox")]
 extern crate syscall;
@@ -115,12 +131,12 @@ mod token;
 
 pub mod net;
 
-#[deprecated(since = "0.6.5", note = "use mio-more instead")]
+#[deprecated(since = "0.6.5", note = "use mio-extras instead")]
 #[cfg(feature = "with-deprecated")]
 #[doc(hidden)]
 pub mod channel;
 
-#[deprecated(since = "0.6.5", note = "use mio-more instead")]
+#[deprecated(since = "0.6.5", note = "use mio-extras instead")]
 #[cfg(feature = "with-deprecated")]
 #[doc(hidden)]
 pub mod timer;
@@ -206,7 +222,7 @@ pub mod fuchsia {
     pub use sys::{
         EventedHandle,
     };
-    pub use sys::fuchsia::{FuchsiaReady, mx_signals_t};
+    pub use sys::fuchsia::{FuchsiaReady, zx_signals_t};
 }
 
 /// Windows-only extensions to the mio crate.
@@ -240,7 +256,7 @@ pub mod fuchsia {
 ///   buffering to ensure that a readiness interface can be provided. For a
 ///   sample implementation see the TCP/UDP modules in mio itself.
 ///
-/// * `Overlapped` - this type is intended to be used as the concreate instances
+/// * `Overlapped` - this type is intended to be used as the concrete instances
 ///   of the `OVERLAPPED` type that most win32 methods expect. It's crucial, for
 ///   safety, that all asynchronous operations are initiated with an instance of
 ///   `Overlapped` and not another instantiation of `OVERLAPPED`.

@@ -1,7 +1,11 @@
 [package]
 
 name          = "mio"
-version       = "0.6.10"
+# When releasing to crates.io:
+# - Update html_root_url.
+# - Update CHANGELOG.md.
+# - Create git tag
+version       = "0.6.14"
 license       = "MIT"
 authors       = ["Carl Lerche <me@carllerche.com>"]
 description   = "Lightweight non-blocking IO"
@@ -22,15 +26,16 @@ with-deprecated = []
 default = ["with-deprecated"]
 
 [dependencies]
-lazycell = "0.5.0"
-log      = "0.3.1"
-slab     = "0.3.0"
+lazycell = "0.6.0"
+log      = "0.4"
+slab     = "0.4.0"
 net2     = { git = "https://github.com/redox-os/net2-rs.git" }
 iovec    = { git = "https://github.com/redox-os/iovec.git" }
 
+
 [target.'cfg(target_os = "fuchsia")'.dependencies]
-magenta = "0.2.0"
-magenta-sys = "0.2.0"
+fuchsia-zircon = "0.3.2"
+fuchsia-zircon-sys = "0.3.2"
 
 [target.'cfg(target_os = "redox")'.dependencies]
 redox_syscall = "0.1"
@@ -39,7 +44,7 @@ redox_syscall = "0.1"
 libc   = { git = "https://github.com/redox-os/liblibc.git" }
 
 [target.'cfg(windows)'.dependencies]
-winapi = "0.2.1"
+winapi = "0.2.6"
 miow   = "0.2.1"
 kernel32-sys = "0.2"
 

@@ -1,6 +1,32 @@
-# Unreleased
+# 0.6.14 (March 8, 2018)
 
-* Minimum Rust version is now 1.14.0
+* Add `Poll::poll_interruptible` (#811)
+* Add `Ready::all` and `usize` conversions (#825)
+
+# 0.6.13 (February 5, 2018)
+
+* Fix build on DragonFlyBSD.
+* Add `TcpListener::from_std` that does not require the socket addr.
+* Deprecate `TcpListener::from_listener` in favor of from_std.
+
+# 0.6.12 (January 5, 2018)
+
+* Add `TcpStream::peek` function (#773).
+* Raise minimum Rust version to 1.18.0.
+* `Poll`: retry select() when interrupted by a signal (#742).
+* Deprecate `Events` index access (#713).
+* Add `Events::clear` (#782).
+* Add support for `lio_listio` (#780).
+
+# 0.6.11 (October 25, 2017)
+
+* Allow register to take empty interest (#640).
+* Fix bug with TCP errors on windows (#725).
+* Add TcpListener::accept_std (#733).
+* Update IoVec to fix soundness bug -- includes behavior change. (#747).
+* Minimum Rust version is now 1.14.0.
+* Fix Android x86_64 build.
+* Misc API & doc polish.
 
 # 0.6.10 (July 27, 2017)
 
@@ -51,7 +77,7 @@
 # 0.6.4 (January 24, 2017)
 
 * Fix compilation on musl
-* Add `TcpStream::from_stream` which conversts a std TCP stream to Mio.
+* Add `TcpStream::from_stream` which converts a std TCP stream to Mio.
 
 # 0.6.3 (January 22, 2017)
 
@@ -134,7 +160,7 @@
 * [FEATURE] Expose TCP shutdown
 * [IMPROVEMENT] Coalesce readable & writable into `ready` event (#184)
 * [IMPROVEMENT] Rename TryRead & TryWrite function names to avoid conflict with std.
-* [IMPROVEMENT] Provide TCP and UDP types in mio (path to windows #155)
+* [IMPROVEMENT] Provide TCP and UDP types in Mio (path to windows #155)
 * [IMPROVEMENT] Use clock_ticks crate instead of time (path to windows #155)
 * [IMPROVEMENT] Move unix specific features into mio::unix module
 * [IMPROVEMENT] TcpListener sets SO_REUSEADDR by default
