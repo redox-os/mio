@@ -235,14 +235,10 @@ impl TcpListener {
     }
 
     pub fn accept(&self) -> io::Result<(net::TcpStream, SocketAddr)> {
-        /*
         self.inner.accept().and_then(|(s, a)| {
             set_nonblock(s.as_raw_fd())?;
-            Ok((TcpStream {
-                inner: s,
-            }, a))
-        })*/
-        self.inner.accept()
+            Ok((s, a))
+        })
     }
 
     #[allow(deprecated)]
