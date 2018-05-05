@@ -7,7 +7,7 @@
 //!
 /// [portability guidelines]: ../struct.Poll.html#portability
 
-
+use std::fmt;
 use std::io::{Read, Write};
 use std::net::{self, SocketAddr};
 use std::net::{SocketAddrV4, SocketAddrV6, Ipv4Addr, Ipv6Addr};
@@ -37,7 +37,7 @@ use poll::SelectorId;
 /// # use std::error::Error;
 /// #
 /// # fn try_main() -> Result<(), Box<Error>> {
-/// #     let _listener = TcpListener::bind("127.0.0.1:3454")?;
+/// #     let _listener = TcpListener::bind("127.0.0.1:34254")?;
 /// use mio::{Events, Ready, Poll, PollOpt, Token};
 /// use mio::net::TcpStream;
 /// use std::time::Duration;
@@ -61,7 +61,6 @@ use poll::SelectorId;
 /// #     try_main().unwrap();
 /// # }
 /// ```
-#[derive(Debug)]
 pub struct TcpStream {
     sys: sys::TcpStream,
     selector_id: SelectorId,
@@ -344,6 +343,16 @@ impl TcpStream {
         self.sys.take_error()
     }
 
+    /// Receives data on the socket from the remote address to which it is
+    /// connected, without removing that data from the queue. On success,
+    /// returns the number of bytes peeked.
+    ///
+    /// Successive calls return the same data. This is accomplished by passing
+    /// `MSG_PEEK` as a flag to the underlying recv system call.
+    pub fn peek(&self, buf: &mut [u8]) -> io::Result<usize> {
+        self.sys.peek(buf)
+    }
+
     /// Read in a list of buffers all at once.
     ///
     /// This operation will attempt to read bytes from this socket and place
@@ -445,6 +454,12 @@ impl Evented for TcpStream {
     }
 }
 
+impl fmt::Debug for TcpStream {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(&self.sys, f)
+    }
+}
+
 /*
  *
  * ===== TcpListener =====
@@ -462,7 +477,7 @@ impl Evented for TcpStream {
 /// use mio::net::TcpListener;
 /// use std::time::Duration;
 ///
-/// let listener = TcpListener::bind(&"127.0.0.1:34254".parse()?)?;
+/// let listener = TcpListener::bind(&"127.0.0.1:34255".parse()?)?;
 ///
 /// let poll = Poll::new()?;
 /// let mut events = Events::with_capacity(128);
@@ -481,7 +496,6 @@ impl Evented for TcpStream {
 /// #     try_main().unwrap();
 /// # }
 /// ```
-#[derive(Debug)]
 pub struct TcpListener {
     sys: sys::TcpListener,
     selector_id: SelectorId,
@@ -520,9 +534,17 @@ impl TcpListener {
         // listen
         let listener = sock.listen(1024)?;
         Ok(TcpListener {
-            sys: sys::TcpListener::new(listener, addr)?,
+            sys: sys::TcpListener::new(listener)?,
             selector_id: SelectorId::new(),
         })
+    }
+
+    #[deprecated(since = "0.6.13", note = "use from_std instead")]
+    #[cfg(feature = "with-deprecated")]
+    #[doc(hidden)]
+    pub fn from_listener(listener: net::TcpListener, _: &SocketAddr)
+                         -> io::Result<TcpListener> {
+        TcpListener::from_std(listener)
     }
 
     /// Creates a new `TcpListener` from an instance of a
@@ -534,9 +556,8 @@ impl TcpListener {
     /// loop.
     ///
     /// The address provided must be the address that the listener is bound to.
-    pub fn from_listener(listener: net::TcpListener, addr: &SocketAddr)
-                         -> io::Result<TcpListener> {
-        sys::TcpListener::new(listener, addr).map(|s| {
+    pub fn from_std(listener: net::TcpListener) -> io::Result<TcpListener> {
+        sys::TcpListener::new(listener).map(|s| {
             TcpListener {
                 sys: s,
                 selector_id: SelectorId::new(),
@@ -554,14 +575,17 @@ impl TcpListener {
     /// If an accepted stream is returned, the remote address of the peer is
     /// returned along with it.
     pub fn accept(&self) -> io::Result<(TcpStream, SocketAddr)> {
-        self.sys.accept().map(|(s, a)| {
-            let stream = TcpStream {
-                sys: s,
-                selector_id: SelectorId::new(),
-            };
+        let (s, a) = try!(self.accept_std());
+        Ok((TcpStream::from_stream(s)?, a))
+    }
 
-            (stream, a)
-        })
+    /// Accepts a new `std::net::TcpStream`.
+    ///
+    /// This method is the same as `accept`, except that it returns a TCP socket
+    /// *in blocking mode* which isn't bound to `mio`. This can be later then
+    /// converted to a `mio` type, if necessary.
+    pub fn accept_std(&self) -> io::Result<(net::TcpStream, SocketAddr)> {
+        self.sys.accept()
     }
 
     /// Returns the local socket address of this listener.
@@ -645,6 +669,12 @@ impl Evented for TcpListener {
 
     fn deregister(&self, poll: &Poll) -> io::Result<()> {
         self.sys.deregister(poll)
+    }
+}
+
+impl fmt::Debug for TcpListener {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Debug::fmt(&self.sys, f)
     }
 }
 

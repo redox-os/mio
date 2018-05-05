@@ -155,6 +155,61 @@ fn read() {
 }
 
 #[test]
+fn peek() {
+    const N: usize = 16 * 1024 * 1024;
+    struct H { amt: usize, socket: TcpStream, shutdown: bool }
+
+    let l = net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = l.local_addr().unwrap();
+
+    let t = thread::spawn(move || {
+        let mut s = l.accept().unwrap().0;
+        let b = [0; 1024];
+        let mut amt = 0;
+        while amt < N {
+            amt += s.write(&b).unwrap();
+        }
+    });
+
+    let poll = Poll::new().unwrap();
+    let s = TcpStream::connect(&addr).unwrap();
+
+    poll.register(&s, Token(1), Ready::readable(), PollOpt::edge()).unwrap();
+
+    let mut events = Events::with_capacity(128);
+
+    let mut h = H { amt: 0, socket: s, shutdown: false };
+    while !h.shutdown {
+        poll.poll(&mut events, None).unwrap();
+
+        for event in &events {
+            assert_eq!(event.token(), Token(1));
+            let mut b = [0; 1024];
+            match h.socket.peek(&mut b) {
+                Ok(_) => (),
+                Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
+                    continue
+                },
+                Err(e) => panic!("unexpected error: {:?}", e),
+            }
+
+            loop {
+                if let Some(amt) = h.socket.try_read(&mut b).unwrap() {
+                    h.amt += amt;
+                } else {
+                    break
+                }
+                if h.amt >= N {
+                    h.shutdown = true;
+                    break
+                }
+            }
+        }
+    }
+    t.join().unwrap();
+}
+
+#[test]
 fn read_bufs() {
     const N: usize = 16 * 1024 * 1024;
 
@@ -524,7 +579,16 @@ fn connect_error() {
     let mut events = Events::with_capacity(16);
 
     // Pick a "random" port that shouldn't be in use.
-    let l = TcpStream::connect(&"127.0.0.1:38381".parse().unwrap()).unwrap();
+    let l = match TcpStream::connect(&"127.0.0.1:38381".parse().unwrap()) {
+        Ok(l) => l,
+        Err(ref e) if e.kind() == io::ErrorKind::ConnectionRefused => {
+            // Connection failed synchronously.  This is not a bug, but it
+            // unfortunately doesn't get us the code coverage we want.
+            return;
+        },
+        Err(e) => panic!("TcpStream::connect unexpected error {:?}", e)
+    };
+
     poll.register(&l, Token(0), Ready::writable(), PollOpt::edge()).unwrap();
 
     'outer:

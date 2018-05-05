@@ -128,6 +128,10 @@ impl TcpStream {
         self.io.take_error()
     }
 
+    pub fn peek(&self, buf: &mut [u8]) -> io::Result<usize> {
+        self.io.peek(buf)
+    }
+
     pub fn readv(&self, bufs: &mut [&mut IoVec]) -> io::Result<usize> {
         unsafe {
             let slice = iovec::as_os_slice_mut(bufs);
@@ -205,7 +209,7 @@ pub struct TcpListener {
 }
 
 impl TcpListener {
-    pub fn new(inner: net::TcpListener, _addr: &SocketAddr) -> io::Result<TcpListener> {
+    pub fn new(inner: net::TcpListener) -> io::Result<TcpListener> {
         set_nonblock(inner.as_raw_fd())?;
 
         let evented_fd = unsafe { EventedFd::new(inner.as_raw_fd()) };

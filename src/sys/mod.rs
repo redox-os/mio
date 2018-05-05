@@ -13,6 +13,9 @@ pub use self::unix::{
 };
 
 #[cfg(all(unix, not(target_os = "fuchsia")))]
+pub use self::unix::READY_ALL;
+
+#[cfg(all(unix, not(target_os = "fuchsia")))]
 #[cfg(feature = "with-deprecated")]
 pub use self::unix::UnixSocket;
 
@@ -63,6 +66,8 @@ pub use self::redox::{
     set_nonblock,
 };
 
-
 #[cfg(target_os = "redox")]
 mod redox;
+
+#[cfg(not(all(unix, not(target_os = "fuchsia"))))]
+pub const READY_ALL: usize = 0;

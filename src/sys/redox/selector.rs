@@ -145,6 +145,9 @@ impl Events {
     pub fn is_empty(&self) -> bool {
         self.events.is_empty()
     }
+    pub fn clear(&mut self) {
+        self.events.clear()
+    }
     pub fn get(&self, idx: usize) -> Option<Event> {
         self.events.get(idx).map(|e| e.clone())
     }
