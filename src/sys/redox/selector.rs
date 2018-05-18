@@ -33,12 +33,13 @@ enum SelectorEvent {
     },
     Wait {
         ret: mpsc::SyncSender<io::Result<Events>>
-    }
+    },
+    Stop
 }
 
 pub struct Selector {
     id: usize,
-
+    thread: Option<thread::JoinHandle<()>>,
     events: Mutex<mpsc::Sender<SelectorEvent>>,
     reload: redox::Awakener
 }
@@ -55,7 +56,7 @@ impl Selector {
 
         // redox needs everything to be on one thread
         // because threads don't share event queue
-        thread::spawn(move || {
+        let thread = thread::spawn(move || {
             let efd = open("event:", O_RDWR | O_CLOEXEC).map_err(super::from_syscall_error).unwrap();
 
             let mut tokens = BTreeMap::new();
@@ -63,9 +64,12 @@ impl Selector {
             fevent(reload_fd, EVENT_READ).unwrap();
 
             loop {
-                let event = rx.recv().unwrap();
-
-                match event {
+                match rx.recv().unwrap() {
+                    SelectorEvent::Stop => {
+                        println!("cleaning up");
+                        close(efd).unwrap();
+                        break;
+                    },
                     SelectorEvent::Register { fd, flags, token, ret } => {
                         println!("Register: {} to token {:?} with flags {}", fd, token, flags);
 
@@ -139,7 +143,7 @@ impl Selector {
 
         Ok(Selector {
             id: id,
-
+            thread: Some(thread),
             events: Mutex::new(tx),
             reload: reload
         })
@@ -233,8 +237,10 @@ fn ioevent_to_fevent(interest: Ready, _opts: PollOpt) -> usize {
 
 impl Drop for Selector {
     fn drop(&mut self) {
-        // let _ = close(self.efd);
-        // TODO
+        self.events.lock().unwrap().send(SelectorEvent::Stop).unwrap();
+        if let Some(thread) = self.thread.take() {
+            thread.join().unwrap();
+        }
     }
 }
 
