@@ -22,6 +22,9 @@ mod pipe {
         pub fn new() -> io::Result<Awakener> {
             let (rd, wr) = redox::pipe()?;
 
+            use std::os::unix::io::AsRawFd;
+            println!("awakener: {}", rd.as_raw_fd());
+
             Ok(Awakener {
                 reader: rd,
                 writer: wr,
@@ -29,6 +32,8 @@ mod pipe {
         }
 
         pub fn wakeup(&self) -> io::Result<()> {
+            use std::os::unix::io::AsRawFd;
+            println!("pls wake up. fd: {}", self.reader().as_raw_fd());
             match (&self.writer).write(&[1]) {
                 Ok(_) => Ok(()),
                 Err(e) => {
@@ -53,7 +58,7 @@ mod pipe {
             }
         }
 
-        fn reader(&self) -> &redox::Io {
+        pub fn reader(&self) -> &redox::Io {
             &self.reader
         }
     }

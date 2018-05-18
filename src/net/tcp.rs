@@ -555,6 +555,7 @@ impl TcpListener {
     /// to receive new connections.
     #[cfg(target_os = "redox")]
     pub fn bind(addr: &SocketAddr) -> io::Result<TcpListener> {
+        println!("binding to {}", addr);
         let listener = net::TcpListener::bind(addr)?;
         Ok(TcpListener {
             sys: sys::TcpListener::new(listener)?,

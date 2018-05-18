@@ -3,8 +3,9 @@ extern crate mio;
 use mio::*;
 use mio::net::TcpListener;
 use std::io::prelude::*;
-use std::thread;
 use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
 
 fn main() {
     // Setup some tokens to allow us to identify which event is
@@ -24,11 +25,13 @@ fn main() {
         let poll = Arc::clone(&poll);
         let listener = Arc::clone(&listener);
         thread::spawn(move || {
+            thread::sleep(Duration::from_secs(5));
+
             println!("Register");
             // Register the listener
-            poll.register(&listener, SERVER, Ready::readable(),
+            poll.register(&listener, SERVER, Ready::all(),
                           PollOpt::edge()).unwrap();
-        }).join().unwrap();
+        });
     }
 
     // Create storage for events

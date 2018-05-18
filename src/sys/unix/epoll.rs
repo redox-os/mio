@@ -69,6 +69,7 @@ impl Selector {
         // Wait for epoll events for at most timeout_ms milliseconds
         evts.clear();
         unsafe {
+            println!("selecting");
             let cnt = cvt(libc::epoll_wait(self.epfd,
                                            evts.events.as_mut_ptr(),
                                            evts.events.capacity() as i32,
@@ -77,6 +78,7 @@ impl Selector {
             evts.events.set_len(cnt);
 
             for i in 0..cnt {
+                println!("got event: {:?}", evts.get(i));
                 if evts.events[i].u64 as usize == awakener.into() {
                     evts.events.remove(i);
                     return Ok(true);
@@ -89,6 +91,7 @@ impl Selector {
 
     /// Register event interests for the given IO handle with the OS
     pub fn register(&self, fd: RawFd, token: Token, interests: Ready, opts: PollOpt) -> io::Result<()> {
+        println!("register {} to {:?} with flags {:?}", fd, token, interests);
         let mut info = libc::epoll_event {
             events: ioevent_to_epoll(interests, opts),
             u64: usize::from(token) as u64
@@ -115,6 +118,7 @@ impl Selector {
 
     /// Deregister event interests for the given IO handle with the OS
     pub fn deregister(&self, fd: RawFd) -> io::Result<()> {
+        println!("deregister {}", fd);
         // The &info argument should be ignored by the system,
         // but linux < 2.6.9 required it to be not null.
         // For compatibility, we provide a dummy EpollEvent.

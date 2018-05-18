@@ -220,6 +220,7 @@ impl AsRawFd for TcpStream {
 
 impl TcpListener {
     pub fn new(inner: net::TcpListener) -> io::Result<TcpListener> {
+        println!("listener on fd {}", inner.as_raw_fd());
         set_nonblock(inner.as_raw_fd())?;
         Ok(TcpListener {
             inner: inner,

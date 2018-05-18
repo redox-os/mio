@@ -3,6 +3,7 @@ extern crate mio;
 use mio::*;
 use mio::net::TcpListener;
 use std::io::prelude::*;
+use std::thread;
 
 fn main() {
     // Setup some tokens to allow us to identify which event is
@@ -12,7 +13,9 @@ fn main() {
     let addr = "0.0.0.0:2222".parse().unwrap();
 
     // Create a poll instance
-    let poll = Poll::new().unwrap();
+    let poll = thread::spawn(move || {
+        Poll::new().unwrap()
+    }).join().unwrap();
 
     println!("Connect");
     // Setup the listener
