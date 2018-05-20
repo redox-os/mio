@@ -22,9 +22,6 @@ mod pipe {
         pub fn new() -> io::Result<Awakener> {
             let (rd, wr) = redox::pipe()?;
 
-            use std::os::unix::io::AsRawFd;
-            println!("awakener: {}", rd.as_raw_fd());
-
             Ok(Awakener {
                 reader: rd,
                 writer: wr,

@@ -66,13 +66,11 @@ impl Selector {
             loop {
                 match rx.recv().unwrap() {
                     SelectorEvent::Stop => {
-                        println!("cleaning up");
                         close(efd).unwrap();
                         break;
                     },
                     SelectorEvent::Register { fd, flags, token, ret } => {
-                        println!("Register: {} to token {:?} with flags {}", fd, token, flags);
-
+                        println!("register {:?}", token);
                         ret.send(fevent(fd, flags)
                                 .map_err(super::from_syscall_error)
                                 .map(|_| {
@@ -82,8 +80,7 @@ impl Selector {
                             .unwrap();
                     },
                     SelectorEvent::Deregister { fd, ret } => {
-                        println!("Deregister: {}", fd);
-
+                        println!("deregister");
                         ret.send(fevent(fd, 0)
                                 .map_err(super::from_syscall_error)
                                 .map(|_| { tokens.remove(&fd); }))
@@ -113,7 +110,6 @@ impl Selector {
                                 break;
                             }
                         };
-                        println!("select done!!111");
 
                         let mut evts = Events::with_capacity(1);
 
@@ -157,7 +153,7 @@ impl Selector {
     pub fn select(&self, evts: &mut Events, awakener: Token, _timeout: Option<Duration>) -> io::Result<bool> {
         let (tx, rx) = mpsc::sync_channel(1);
 
-        println!("pls select?");
+        println!("timeout: {:?}", _timeout);
         self.events.lock().unwrap().send(SelectorEvent::Wait {
             ret: tx
         }).unwrap();
@@ -185,12 +181,12 @@ impl Selector {
 
     /// Register event interests for the given IO handle with the OS
     pub fn register(&self, fd: RawFd, token: Token, interests: Ready, opts: PollOpt) -> io::Result<()> {
+        println!("schedule register {} to {:?}", fd, token);
         let flags = ioevent_to_fevent(interests, opts);
         //fevent(fd, flags).map_err(super::from_syscall_error)?;
 
         let (tx, rx) = mpsc::sync_channel(1);
 
-        println!("Scheduling register: {}", fd);
         self.events.lock().unwrap().send(SelectorEvent::Register {
             fd: fd,
             flags: flags,
@@ -209,9 +205,9 @@ impl Selector {
 
     /// Deregister event interests for the given IO handle with the OS
     pub fn deregister(&self, fd: RawFd) -> io::Result<()> {
+        println!("schedule deregister {}", fd);
         let (tx, rx) = mpsc::sync_channel(1);
 
-        println!("Scheduling deregister: {}", fd);
         self.events.lock().unwrap().send(SelectorEvent::Deregister {
             fd: fd,
             ret: tx
