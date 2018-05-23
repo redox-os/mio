@@ -1,6 +1,7 @@
 use {io, poll, Ready, Poll, PollOpt, Token};
 use event::Evented;
-use std::os::unix::io::RawFd;
+use std::fs::File;
+use std::os::unix::io::{FromRawFd, RawFd};
 
 /*
  *
@@ -102,5 +103,28 @@ impl<'a> Evented for EventedFd<'a> {
 
     fn deregister(&self, poll: &Poll) -> io::Result<()> {
         poll::selector(poll).deregister(*self.0)
+    }
+}
+
+/// Same as EventedFd but owning.
+/// This closes the file descriptor on drop.
+pub struct OwnedEventedFd(pub RawFd);
+
+impl Evented for OwnedEventedFd {
+    fn register(&self, poll: &Poll, token: Token, interest: Ready, opts: PollOpt) -> io::Result<()> {
+        poll::selector(poll).register(self.0, token, interest, opts)
+    }
+
+    fn reregister(&self, poll: &Poll, token: Token, interest: Ready, opts: PollOpt) -> io::Result<()> {
+        poll::selector(poll).reregister(self.0, token, interest, opts)
+    }
+
+    fn deregister(&self, poll: &Poll) -> io::Result<()> {
+        poll::selector(poll).deregister(self.0)
+    }
+}
+impl Drop for OwnedEventedFd {
+    fn drop(&mut self) {
+        let _ = unsafe { File::from_raw_fd(self.0) };
     }
 }

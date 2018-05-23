@@ -6,7 +6,7 @@ mod tcp;
 mod udp;
 
 pub use self::awakener::Awakener;
-pub use self::eventedfd::EventedFd;
+pub use self::eventedfd::{EventedFd, OwnedEventedFd};
 pub use self::io::{Io, set_nonblock};
 pub use self::selector::{Events, Selector};
 pub use self::tcp::{TcpStream, TcpListener};

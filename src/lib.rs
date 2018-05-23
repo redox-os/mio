@@ -203,6 +203,7 @@ pub mod unix {
     //! Unix only extensions
     pub use sys::{
         EventedFd,
+        OwnedEventedFd,
     };
     #[cfg(unix)]
     pub use sys::unix::UnixReady;
