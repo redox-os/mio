@@ -1,6 +1,6 @@
 use {io, poll, Evented, Ready, Poll, PollOpt, Token};
-use std::os::unix::io::RawFd;
-use syscall;
+use std::fs::File;
+use std::os::unix::io::{AsRawFd, RawFd};
 
 /*
  *
@@ -108,23 +108,31 @@ impl<'a> Evented for EventedFd<'a> {
 /// Same as EventedFd but owning.
 /// This closes the file descriptor on drop.
 #[derive(Debug)]
-pub struct OwnedEventedFd(pub RawFd);
+pub struct OwnedEventedFd(pub File);
 
 impl Evented for OwnedEventedFd {
     fn register(&self, poll: &Poll, token: Token, interest: Ready, opts: PollOpt) -> io::Result<()> {
-        poll::selector(poll).register(self.0, token, interest, opts)
+        poll::selector(poll).register(self.0.as_raw_fd(), token, interest, opts)
     }
 
     fn reregister(&self, poll: &Poll, token: Token, interest: Ready, opts: PollOpt) -> io::Result<()> {
-        poll::selector(poll).reregister(self.0, token, interest, opts)
+        poll::selector(poll).reregister(self.0.as_raw_fd(), token, interest, opts)
     }
 
     fn deregister(&self, poll: &Poll) -> io::Result<()> {
-        poll::selector(poll).deregister(self.0)
+        poll::selector(poll).deregister(self.0.as_raw_fd())
     }
 }
-impl Drop for OwnedEventedFd {
-    fn drop(&mut self) {
-        let _ = syscall::close(self.0);
+impl io::Read for OwnedEventedFd {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.0.read(buf)
+    }
+}
+impl io::Write for OwnedEventedFd {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.0.write(buf)
+    }
+    fn flush(&mut self) -> io::Result<()> {
+        self.0.flush()
     }
 }
