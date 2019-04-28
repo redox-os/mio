@@ -260,7 +260,7 @@ impl UnixReady {
     ///
     /// [`Poll`]: struct.Poll.html
     #[inline]
-    #[cfg(any(target_os = "linux", target_os = "android", target_os = "solaris"))]
+    #[cfg(any(target_os = "linux", target_os = "android", target_os = "solaris", target_os = "redox"))]
     pub fn priority() -> UnixReady {
         UnixReady(ready_from_usize(PRI))
     }
@@ -381,7 +381,7 @@ impl UnixReady {
     ///
     /// [`Poll`]: struct.Poll.html
     #[inline]
-    #[cfg(any(target_os = "linux", target_os = "android", target_os = "solaris"))]
+    #[cfg(any(target_os = "linux", target_os = "android", target_os = "solaris", target_os = "redox"))]
     pub fn is_priority(&self) -> bool {
         self.contains(ready_from_usize(PRI))
     }

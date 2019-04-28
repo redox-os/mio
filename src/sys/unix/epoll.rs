@@ -99,6 +99,8 @@ impl Selector {
         let mut info = libc::epoll_event {
             events: ioevent_to_epoll(interests, opts),
             u64: usize::from(token) as u64,
+            #[cfg(target_os = "redox")]
+            _pad: 0,
         };
 
         unsafe {
@@ -123,6 +125,8 @@ impl Selector {
         let mut info = libc::epoll_event {
             events: ioevent_to_epoll(interests, opts),
             u64: usize::from(token) as u64,
+            #[cfg(target_os = "redox")]
+            _pad: 0,
         };
 
         unsafe {
@@ -141,7 +145,12 @@ impl Selector {
         // The &info argument should be ignored by the system,
         // but linux < 2.6.9 required it to be not null.
         // For compatibility, we provide a dummy EpollEvent.
-        let mut info = libc::epoll_event { events: 0, u64: 0 };
+        let mut info = libc::epoll_event {
+            events: 0,
+            u64: 0,
+            #[cfg(target_os = "redox")]
+            _pad: 0,
+        };
 
         unsafe {
             cvt(libc::epoll_ctl(
@@ -266,6 +275,8 @@ impl Events {
         self.events.push(libc::epoll_event {
             events: ioevent_to_epoll(event.readiness(), PollOpt::empty()),
             u64: usize::from(event.token()) as u64,
+            #[cfg(target_os = "redox")]
+            _pad: 0,
         });
     }
 

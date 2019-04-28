@@ -3,10 +3,10 @@ use libc::{self, c_int};
 #[macro_use]
 pub mod dlsym;
 
-#[cfg(any(target_os = "linux", target_os = "android", target_os = "solaris"))]
+#[cfg(any(target_os = "linux", target_os = "android", target_os = "solaris", target_os = "redox"))]
 mod epoll;
 
-#[cfg(any(target_os = "linux", target_os = "android", target_os = "solaris"))]
+#[cfg(any(target_os = "linux", target_os = "android", target_os = "solaris", target_os = "redox"))]
 pub use self::epoll::{Events, Selector};
 
 #[cfg(any(
