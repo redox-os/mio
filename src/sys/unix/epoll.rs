@@ -91,7 +91,9 @@ impl Selector {
     pub fn register(&self, fd: RawFd, token: Token, interests: Ready, opts: PollOpt) -> io::Result<()> {
         let mut info = libc::epoll_event {
             events: ioevent_to_epoll(interests, opts),
-            u64: usize::from(token) as u64
+            u64: usize::from(token) as u64,
+            #[cfg(target_os = "redox")]
+            _pad: 0,
         };
 
         unsafe {
@@ -104,7 +106,9 @@ impl Selector {
     pub fn reregister(&self, fd: RawFd, token: Token, interests: Ready, opts: PollOpt) -> io::Result<()> {
         let mut info = libc::epoll_event {
             events: ioevent_to_epoll(interests, opts),
-            u64: usize::from(token) as u64
+            u64: usize::from(token) as u64,
+            #[cfg(target_os = "redox")]
+            _pad: 0,
         };
 
         unsafe {
@@ -121,6 +125,8 @@ impl Selector {
         let mut info = libc::epoll_event {
             events: 0,
             u64: 0,
+            #[cfg(target_os = "redox")]
+            _pad: 0,
         };
 
         unsafe {
@@ -232,7 +238,9 @@ impl Events {
     pub fn push_event(&mut self, event: Event) {
         self.events.push(libc::epoll_event {
             events: ioevent_to_epoll(event.readiness(), PollOpt::empty()),
-            u64: usize::from(event.token()) as u64
+            u64: usize::from(event.token()) as u64,
+            #[cfg(target_os = "redox")]
+            _pad: 0,
         });
     }
 

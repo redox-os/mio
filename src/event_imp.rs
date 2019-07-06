@@ -956,7 +956,6 @@ impl<T: Into<Ready>> ops::SubAssign<T> for Ready {
 }
 
 #[deprecated(since = "0.6.10", note = "removed")]
-#[cfg(feature = "with-deprecated")]
 #[doc(hidden)]
 impl ops::Not for Ready {
     type Output = Ready;
